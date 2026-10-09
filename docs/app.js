@@ -22,7 +22,7 @@ const FALLBACK_BEACH_IMAGES = [
 
 // URL do Backend Node.js
 // ATENÇÃO: Troque esta URL quando hospedar o backend no Render, Railway, etc.
-const API_URL = "/api/data";
+const API_URL = "https://viagem-praia.onrender.com";
 
 // O usuário ativo continua salvo no localStorage (pois é individual de cada celular/PC)
 const ACTIVE_USER_KEY = "viagem_praia_airbnb_active_user";
