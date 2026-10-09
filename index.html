@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Viagem à Praia 🏖️ | Escolha do Airbnb</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- CABEÇALHO PRINCIPAL -->
+  <header class="header">
+    <div class="container header-container">
+      <div class="logo-area">
+        <span class="logo-icon">🏖️</span>
+        <div>
+          <h1 class="logo-title">Trip dos Amigos</h1>
+          <p class="logo-subtitle">Votação do Airbnb da Praia</p>
+        </div>
+      </div>
+
+      <!-- SELETOR DE PERFIL ATIVO -->
+      <div class="user-selector-card">
+        <span class="user-selector-label">👤 Quem está votando agora?</span>
+        <div class="profiles-bar" id="profilesBar">
+          <!-- Gerado via JavaScript -->
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- BANNER / BOAS-VINDAS -->
+  <section class="hero-section">
+    <div class="container hero-content">
+      <div class="hero-text">
+        <div class="badge-trip">🌴 Férias na Praia</div>
+        <h2>Escolha a melhor casa ou apartamento para nossa viagem!</h2>
+        <p>Cadastre os anúncios do Airbnb que você encontrou, filtre pelas praias e vote nos seus favoritos.</p>
+      </div>
+
+      <!-- ESTATÍSTICAS RÁPIDAS -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-number" id="totalPlacesCount">0</span>
+          <span class="stat-desc">Lugares cadastrados</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number" id="totalVotesCount">0</span>
+          <span class="stat-desc">Votos computados</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number">5</span>
+          <span class="stat-desc">Amigos votando</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BARRA DE AÇÕES: FILTROS POR PRAIA, BUSCA E CADASTRO -->
+  <section class="controls-section">
+    <div class="container">
+      <div class="controls-bar">
+        <!-- CATEGORIZAÇÃO / FILTROS DE PRAIAS -->
+        <div class="beaches-filter-wrapper">
+          <span class="filter-title">📍 Praias:</span>
+          <div class="beach-tags" id="beachFilters">
+            <!-- Gerado via JavaScript -->
+          </div>
+        </div>
+
+        <!-- BOTÃO PARA CADASTRAR NOVO LUGAR -->
+        <div class="action-buttons">
+          <button class="btn btn-primary" id="btnOpenModal" type="button">
+            <span class="btn-icon">➕</span> Cadastrar Airbnb
+          </button>
+        </div>
+      </div>
+
+      <!-- BARRA SECUNDÁRIA: BUSCA E ORDENAÇÃO -->
+      <div class="sub-controls-bar">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" placeholder="Buscar por título ou praia..." autocomplete="off">
+          <button id="clearSearchBtn" class="clear-btn" title="Limpar busca" style="display: none;">✕</button>
+        </div>
+
+        <div class="sort-box">
+          <label for="sortSelect">Ordenar por:</label>
+          <select id="sortSelect">
+            <option value="votes-desc">🔥 Mais votados</option>
+            <option value="price-asc">💰 Menor preço</option>
+            <option value="price-desc">💎 Maior preço</option>
+            <option value="recent">⏱️ Mais recentes</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEED DE AIRBNBS -->
+  <main class="container main-content">
+    <div class="feed-header">
+      <h3 id="currentFilterTitle">Todos os lugares disponíveis</h3>
+      <span class="places-counter" id="showingCountBadge">0 opções</span>
+    </div>
+
+    <!-- GRID DE CARDS -->
+    <div class="places-grid" id="placesGrid">
+      <!-- Cards gerados via JS -->
+    </div>
+
+    <!-- ESTADO VAZIO -->
+    <div class="empty-state" id="emptyState" style="display: none;">
+      <div class="empty-icon">🏝️</div>
+      <h3>Nenhum Airbnb encontrado nesta categoria</h3>
+      <p>Que tal cadastrar o primeiro anúncio para esta praia agora mesmo?</p>
+      <button class="btn btn-primary" onclick="openNewPlaceModal()">➕ Cadastrar Airbnb</button>
+    </div>
+  </main>
+
+  <!-- MODAL DE CADASTRO DE NOVO AIRBNB -->
+  <div class="modal-overlay" id="modalOverlay" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-header">
+        <div>
+          <h3 id="modalTitle">Cadastrar Novo Airbnb</h3>
+          <p class="modal-subtitle">Sugira uma opção para o grupo avaliar</p>
+        </div>
+        <button class="modal-close-btn" id="btnCloseModal" type="button" aria-label="Fechar modal">✕</button>
+      </div>
+
+      <form id="newPlaceForm" novalidate>
+        <!-- LINK DO AIRBNB (OBRIGATÓRIO) -->
+        <div class="form-group">
+          <label for="placeUrl" class="form-label required">
+            🔗 Link do anúncio no Airbnb
+          </label>
+          <input 
+            type="url" 
+            id="placeUrl" 
+            placeholder="Ex: https://www.airbnb.com.br/rooms/12345678" 
+            required 
+            class="form-control"
+          >
+          <span class="form-hint">Cole o link completo do anúncio.</span>
+        </div>
+
+        <!-- TÍTULO DO LUGAR (OBRIGATÓRIO) -->
+        <div class="form-group">
+          <label for="placeTitle" class="form-label required">
+            🏠 Título / Nome do lugar
+          </label>
+          <input 
+            type="text" 
+            id="placeTitle" 
+            placeholder="Ex: Casa com Piscina e Churrasqueira a 100m da praia" 
+            required 
+            class="form-control"
+          >
+        </div>
+
+        <!-- PRAIA (OBRIGATÓRIO COM CADASTRO DINÂMICO) -->
+        <div class="form-group">
+          <div class="label-with-action">
+            <label for="placeBeach" class="form-label required">
+              📍 Em qual praia fica?
+            </label>
+            <button type="button" class="btn-text-link" id="btnToggleNewBeach">
+              + Cadastrar nova praia
+            </button>
+          </div>
+
+          <!-- SELECT DE PRAIAS EXISTENTES -->
+          <select id="placeBeach" class="form-control" required>
+            <option value="">Selecione a praia...</option>
+            <!-- Opções geradas via JS -->
+          </select>
+
+          <!-- CAMPO PARA DIGITAR NOVA PRAIA SE NÃO EXISTIR NA LISTA -->
+          <div class="new-beach-box" id="newBeachBox" style="display: none;">
+            <label for="newBeachInput" class="form-label-small">
+              Nome da nova praia:
+            </label>
+            <div class="input-with-btn">
+              <input 
+                type="text" 
+                id="newBeachInput" 
+                class="form-control" 
+                placeholder="Ex: Caraguatatuba, Maresias..."
+              >
+              <button type="button" class="btn btn-secondary" id="btnSaveNewBeach">
+                Adicionar
+              </button>
+            </div>
+            <span class="form-hint">A nova praia ficará salva e categorizada automaticamente!</span>
+          </div>
+        </div>
+
+        <!-- FOTO PRINCIPAL (OPCIONAL) -->
+        <div class="form-group">
+          <label for="placeImage" class="form-label">
+            🖼️ Link da foto principal <span class="badge-optional">(opcional)</span>
+          </label>
+          <input 
+            type="url" 
+            id="placeImage" 
+            placeholder="Cole o link da imagem (ou deixe em branco para foto automática)" 
+            class="form-control"
+          >
+          <span class="form-hint">Se deixar vazio, usaremos uma linda foto de praia automaticamente.</span>
+        </div>
+
+        <!-- PREÇO E DIAS (OPCIONAIS) -->
+        <div class="form-row">
+          <div class="form-group col-half">
+            <label for="placePrice" class="form-label">
+              💰 Preço total (R$) <span class="badge-optional">(opcional)</span>
+            </label>
+            <input 
+              type="number" 
+              id="placePrice" 
+              min="0" 
+              step="10" 
+              placeholder="Ex: 1500" 
+              class="form-control"
+            >
+          </div>
+
+          <div class="form-group col-half">
+            <label for="placeDays" class="form-label">
+              📅 Quantidade de dias <span class="badge-optional">(opcional)</span>
+            </label>
+            <input 
+              type="number" 
+              id="placeDays" 
+              min="1" 
+              placeholder="Ex: 3" 
+              class="form-control"
+            >
+          </div>
+        </div>
+
+        <!-- PREVIEW DE QUEM ESTÁ SUGERINDO -->
+        <div class="creator-notice">
+          <span>Cadastrando como:</span>
+          <strong id="modalActiveUser">Thayna</strong>
+        </div>
+
+        <!-- BOTÕES DO FORMULÁRIO -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" id="btnCancelModal">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="btnSubmitPlace">
+            Salvar Airbnb 🚀
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- RODAPÉ & FERRAMENTAS EXTRAS -->
+  <footer class="footer">
+    <div class="container footer-content">
+      <div class="footer-info">
+        <p><strong>Praia & Amigos 2026</strong> • Gabriela, Brenda, Kenji, Fabio & Thayna 🌴</p>
+        <p class="footer-sub">Os dados são salvos no seu navegador e sincronizados com <code>data.json</code>.</p>
+      </div>
+
+      <div class="footer-tools">
+        <button class="btn btn-sm btn-outline" id="btnExportJson" title="Baixar JSON atualizado">
+          📥 Exportar JSON
+        </button>
+        <button class="btn btn-sm btn-outline" id="btnResetData" title="Voltar aos dados originais">
+          🔄 Restaurar Padrão
+        </button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- NOTIFICAÇÃO TOAST FLUTUANTE -->
+  <div class="toast" id="toast" role="alert" aria-live="polite"></div>
+
+  <!-- SCRIPT JS -->
+  <script src="app.js"></script>
+</body>
+</html>
