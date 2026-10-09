@@ -1,15 +1,4 @@
-// DADOS PADRÃO (fallback caso a API falhe)
-const DEFAULT_DATA = {
-  friends: [
-    { id: "gabriela", name: "Gabriela", avatar: "🌸", color: "#ec4899" },
-    { id: "brenda", name: "Brenda", avatar: "🌺", color: "#f43f5e" },
-    { id: "kenji", name: "Kenji", avatar: "🏄‍♂️", color: "#06b6d4" },
-    { id: "fabio", name: "Fabio", avatar: "🕶️", color: "#f59e0b" },
-    { id: "thayna", name: "Thayna", avatar: "🌊", color: "#3b82f6" }
-  ],
-  beaches: ["Peruíbe", "Praia Grande", "Ubatuba", "Maresias", "Guarujá"],
-  places: []
-};
+
 
 const FALLBACK_BEACH_IMAGES = [
   "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=900&q=80",
@@ -26,6 +15,7 @@ const API_URL = "https://viagem-praia.onrender.com/api/data";
 
 // O usuário ativo continua salvo no localStorage (pois é individual de cada celular/PC)
 const ACTIVE_USER_KEY = "viagem_praia_airbnb_active_user";
+const DATA_BACKUP_KEY = "viagem_praia_airbnb_data_backup";
 
 // ESTADO GLOBAL DO APLICATIVO
 let appState = {
@@ -82,6 +72,10 @@ const DOM = {
 async function initApp() {
   const hasSavedUser = loadActiveUser();
   await loadData();
+  if (!appState.friends.some(friend => friend.id === currentUserId)) {
+    currentUserId = appState.friends[0]?.id || "thayna";
+    localStorage.setItem(ACTIVE_USER_KEY, currentUserId);
+  }
   setupEventListeners();
   renderProfilesBar();
   renderBeachFilters();
@@ -95,36 +89,90 @@ async function initApp() {
  * Carrega os dados da API Node.js centralizada
  */
 async function loadData() {
+  const localBackup = readLocalDataBackup();
+
   try {
     const res = await fetch(API_URL);
     if (res.ok) {
-      appState = await res.json();
+      const serverData = await res.json();
+      if (hasPlaces(serverData) || !hasPlaces(localBackup)) {
+        appState = normalizeData(serverData);
+      } else {
+        appState = localBackup;
+        showToast("Dados locais recuperados enquanto a API está vazia.", "warning");
+        await saveData();
+      }
+      saveLocalDataBackup();
       return;
     }
   } catch (err) {
-    console.warn("Falha ao conectar com o backend Node.js, utilizando DEFAULT_DATA", err);
-    showToast("Usando dados offline temporários", "warning");
+    console.warn("Falha ao conectar com o backend Node.js", err);
   }
 
-  // Fallback seguro caso o servidor esteja fora do ar
-  appState = JSON.parse(JSON.stringify(DEFAULT_DATA));
+  appState = localBackup || JSON.parse(JSON.stringify(DEFAULT_DATA));
+  if (localBackup) {
+    showToast("Dados recuperados do backup deste dispositivo.", "warning");
+  } else {
+    showToast("Usando dados offline temporários", "warning");
+  }
 }
 
 /**
  * Salva o estado atual na API Node.js
  */
 async function saveData() {
+  saveLocalDataBackup();
   try {
-    await fetch(API_URL, {
+    const res = await fetch(API_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
       body: JSON.stringify(appState)
     });
+    if (!res.ok) {
+      throw new Error(`API respondeu com status ${res.status}`);
+    }
   } catch (err) {
     console.error("Erro ao sincronizar com o backend", err);
-    showToast("Erro ao sincronizar votos com os outros amigos!", "warning");
+    showToast("Alteração salva neste dispositivo, mas não foi sincronizada.", "warning");
+  }
+}
+
+function hasPlaces(data) {
+  return Boolean(data && Array.isArray(data.places) && data.places.length > 0);
+}
+
+function normalizeData(data) {
+  const friends = (Array.isArray(data.friends) ? data.friends : DEFAULT_DATA.friends)
+    .filter(friend => friend.id !== "kenji")
+    .map(friend => friend.id === "gabriela" ? { ...friend, name: "Gabriela e Kenji" } : friend);
+
+  return {
+    friends: friends.length ? friends : JSON.parse(JSON.stringify(DEFAULT_DATA.friends)),
+    beaches: Array.isArray(data.beaches) ? data.beaches : JSON.parse(JSON.stringify(DEFAULT_DATA.beaches)),
+    places: (Array.isArray(data.places) ? data.places : []).map(place => ({
+      ...place,
+      votes: Array.isArray(place.votes) ? place.votes.filter(userId => userId !== "kenji") : []
+    }))
+  };
+}
+
+function readLocalDataBackup() {
+  try {
+    const saved = localStorage.getItem(DATA_BACKUP_KEY);
+    return saved ? normalizeData(JSON.parse(saved)) : null;
+  } catch (err) {
+    console.warn("Não foi possível ler o backup local dos dados", err);
+    return null;
+  }
+}
+
+function saveLocalDataBackup() {
+  try {
+    localStorage.setItem(DATA_BACKUP_KEY, JSON.stringify(appState));
+  } catch (err) {
+    console.warn("Não foi possível salvar o backup local dos dados", err);
   }
 }
 

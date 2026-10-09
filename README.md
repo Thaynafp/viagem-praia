@@ -1,6 +1,6 @@
 # 🏖️ Viagem à Praia com os Amigos - Votação do Airbnb
 
-Aplicação web desenvolvida exclusivamente com **HTML, CSS, JavaScript (Vanilla) e JSON**, para organizar a escolha da casa ou apartamento da viagem com os 5 amigos: **Gabriela, Brenda, Kenji, Fabio e Thayna**.
+Aplicação web desenvolvida exclusivamente com **HTML, CSS, JavaScript (Vanilla) e JSON**, para organizar a escolha da casa ou apartamento da viagem com os amigos: **Gabriela, Brenda, Fabio e Thayna**.
 
 ---
 
@@ -19,7 +19,6 @@ Aplicação web desenvolvida exclusivamente com **HTML, CSS, JavaScript (Vanilla
 - **5 Perfis Personalizados:**
   - 🌸 **Gabriela**
   - 🌺 **Brenda**
-  - 🏄‍♂️ **Kenji**
   - 🕶️ **Fabio**
   - 🌊 **Thayna**
   - Você pode alternar quem está votando a qualquer momento no topo da página com apenas 1 clique.
@@ -57,4 +56,5 @@ Aplicação web desenvolvida exclusivamente com **HTML, CSS, JavaScript (Vanilla
 - **Persistência de Dados:**
   - Arquivo inicial `data.json` com praias, perfis e anúncios de exemplo.
   - Todas as alterações, novos cadastros e votos são persistidos localmente no navegador (`localStorage`).
+  - O navegador mantém um backup automático dos dados, e o servidor preserva a versão anterior em `data.backup.json` antes de cada sincronização.
   - No primeiro acesso, o site pergunta qual dos cinco perfis está usando o dispositivo.
