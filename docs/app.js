@@ -35,6 +35,7 @@ let appState = {
 };
 
 let currentUserId = "thayna";
+let editingPlaceId = null;
 let selectedBeach = "all";
 let searchTerm = "";
 let currentSort = "votes-desc";
@@ -68,8 +69,10 @@ const DOM = {
   placePrice: document.getElementById("placePrice"),
   placeDays: document.getElementById("placeDays"),
   modalActiveUser: document.getElementById("modalActiveUser"),
-  btnExportJson: document.getElementById("btnExportJson"),
-  btnResetData: document.getElementById("btnResetData"),
+  profileModalOverlay: document.getElementById("profileModalOverlay"),
+  profileChoiceGrid: document.getElementById("profileChoiceGrid"),
+  modalTitle: document.getElementById("modalTitle"),
+  btnSubmitPlace: document.getElementById("btnSubmitPlace"),
   toast: document.getElementById("toast")
 };
 
@@ -77,7 +80,7 @@ const DOM = {
 // INICIALIZAÇÃO E CARREGAMENTO DE DADOS (AGORA VIA API)
 // ==========================================================================
 async function initApp() {
-  loadActiveUser();
+  const hasSavedUser = loadActiveUser();
   await loadData();
   setupEventListeners();
   renderProfilesBar();
@@ -85,6 +88,7 @@ async function initApp() {
   populateBeachSelect();
   renderPlaces();
   updateStats();
+  if (!hasSavedUser) openProfileModal();
 }
 
 /**
@@ -131,7 +135,9 @@ function loadActiveUser() {
   const saved = localStorage.getItem(ACTIVE_USER_KEY);
   if (saved) {
     currentUserId = saved;
+    return true;
   }
+  return false;
 }
 
 function setActiveUser(userId) {
@@ -142,6 +148,22 @@ function setActiveUser(userId) {
   renderPlaces();
   const friend = getFriend(userId);
   showToast(`Perfil ativo: ${friend ? friend.name : userId} ${friend ? friend.avatar : ""}`);
+}
+
+function openProfileModal() {
+  DOM.profileChoiceGrid.innerHTML = "";
+  appState.friends.forEach(friend => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "profile-choice";
+    button.innerHTML = `<span class="profile-choice-avatar">${friend.avatar}</span><strong>${friend.name}</strong>`;
+    button.addEventListener("click", () => {
+      setActiveUser(friend.id);
+      DOM.profileModalOverlay.classList.remove("open");
+    });
+    DOM.profileChoiceGrid.appendChild(button);
+  });
+  DOM.profileModalOverlay.classList.add("open");
 }
 
 function getFriend(userId) {
@@ -370,6 +392,9 @@ function createPlaceCard(place, maxVotes) {
           <button type="button" class="btn-delete-place" data-delete-id="${place.id}" title="Excluir este anúncio">
             🗑️
           </button>
+          <button type="button" class="btn-edit-place" data-edit-id="${place.id}" title="Editar este anúncio">
+            ✏️
+          </button>
         </div>
       </div>
     </div>
@@ -380,6 +405,9 @@ function createPlaceCard(place, maxVotes) {
 
   const btnDelete = card.querySelector(".btn-delete-place");
   btnDelete.addEventListener("click", () => deletePlace(place.id));
+
+  const btnEdit = card.querySelector(".btn-edit-place");
+  btnEdit.addEventListener("click", () => openEditPlaceModal(place.id));
 
   return card;
 }
@@ -440,27 +468,40 @@ async function handleNewPlaceSubmit(e) {
   if (!title) { showToast("Informe o título do lugar!", "warning"); DOM.placeTitle.focus(); return; }
   if (!beach) { showToast("Selecione ou cadastre uma praia!", "warning"); DOM.placeBeach.focus(); return; }
 
-  const newPlace = {
-    id: "place-" + Date.now(),
-    title: title,
-    beach: beach,
-    url: url,
+  const placeData = {
+    title,
+    beach,
+    url,
     image: image || "",
     price: priceVal ? parseFloat(priceVal) : null,
-    days: daysVal ? parseInt(daysVal, 10) : null,
-    createdBy: currentUserId,
-    createdAt: new Date().toISOString(),
-    votes: [currentUserId]
+    days: daysVal ? parseInt(daysVal, 10) : null
   };
 
-  appState.places.unshift(newPlace);
+  const isEditing = Boolean(editingPlaceId);
+  if (isEditing) {
+    const place = appState.places.find(item => item.id === editingPlaceId);
+    if (!place) {
+      showToast("Não foi possível encontrar este anúncio.", "warning");
+      closeNewPlaceModal();
+      return;
+    }
+    Object.assign(place, placeData);
+  } else {
+    appState.places.unshift({
+      id: "place-" + Date.now(),
+      ...placeData,
+      createdBy: currentUserId,
+      createdAt: new Date().toISOString(),
+      votes: [currentUserId]
+    });
+  }
   closeNewPlaceModal();
   renderBeachFilters();
   renderPlaces();
   updateStats();
 
   const friend = getFriend(currentUserId);
-  showToast(`🎉 Novo Airbnb cadastrado por ${friend.name}!`, "success");
+  showToast(isEditing ? "Airbnb atualizado com sucesso!" : `🎉 Novo Airbnb cadastrado por ${friend.name}!`, "success");
   
   await saveData();
 }
@@ -495,16 +536,39 @@ async function handleSaveNewBeach() {
 }
 
 function openNewPlaceModal() {
+  editingPlaceId = null;
   DOM.newPlaceForm.reset();
   DOM.newBeachBox.style.display = "none";
   populateBeachSelect();
   updateModalActiveUser();
+  DOM.modalTitle.textContent = "Cadastrar Novo Airbnb";
+  DOM.btnSubmitPlace.textContent = "Salvar Airbnb 🚀";
   DOM.modalOverlay.classList.add("open");
   DOM.placeUrl.focus();
 }
 
+function openEditPlaceModal(placeId) {
+  const place = appState.places.find(item => item.id === placeId);
+  if (!place) return;
+
+  editingPlaceId = placeId;
+  DOM.modalTitle.textContent = "Editar Airbnb";
+  DOM.btnSubmitPlace.textContent = "Salvar alterações";
+  DOM.placeUrl.value = place.url || "";
+  DOM.placeTitle.value = place.title || "";
+  DOM.placeImage.value = place.image || "";
+  DOM.placePrice.value = place.price || "";
+  DOM.placeDays.value = place.days || "";
+  DOM.newBeachBox.style.display = "none";
+  populateBeachSelect(place.beach);
+  updateModalActiveUser();
+  DOM.modalOverlay.classList.add("open");
+  DOM.placeTitle.focus();
+}
+
 function closeNewPlaceModal() {
   DOM.modalOverlay.classList.remove("open");
+  editingPlaceId = null;
 }
 
 function updateStats() {
@@ -563,29 +627,6 @@ function setupEventListeners() {
     renderPlaces();
   });
 
-  DOM.btnExportJson.addEventListener("click", () => {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
-    const downloadAnchor = document.createElement("a");
-    downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", "viagem-praia-airbnb-dados.json");
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
-    showToast("Arquivo JSON exportado com sucesso! 📥", "success");
-  });
-
-  DOM.btnResetData.addEventListener("click", async () => {
-    if (window.confirm("Deseja restaurar as opções para todos? Os cadastros serão resetados.")) {
-      appState = JSON.parse(JSON.stringify(DEFAULT_DATA));
-      selectedBeach = "all";
-      renderBeachFilters();
-      populateBeachSelect();
-      renderPlaces();
-      updateStats();
-      showToast("Dados restaurados! Sincronizando... 🔄");
-      await saveData();
-    }
-  });
 }
 
 window.addEventListener("DOMContentLoaded", initApp);

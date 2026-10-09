@@ -260,21 +260,25 @@
     </div>
   </div>
 
-  <!-- RODAPÉ & FERRAMENTAS EXTRAS -->
+  <!-- MODAL DE PRIMEIRO ACESSO -->
+  <div class="modal-overlay" id="profileModalOverlay" aria-hidden="true">
+    <div class="modal-card profile-modal-card" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
+      <div class="modal-header">
+        <div>
+          <h3 id="profileModalTitle">Quem é você?</h3>
+          <p class="modal-subtitle">Escolha seu perfil para votar e cadastrar Airbnbs.</p>
+        </div>
+      </div>
+      <div class="profile-choice-grid" id="profileChoiceGrid"></div>
+    </div>
+  </div>
+
+  <!-- RODAPÉ -->
   <footer class="footer">
     <div class="container footer-content">
       <div class="footer-info">
         <p><strong>Praia & Amigos 2026</strong> • Gabriela, Brenda, Kenji, Fabio & Thayna 🌴</p>
         <p class="footer-sub">Os dados são salvos no seu navegador e sincronizados com <code>data.json</code>.</p>
-      </div>
-
-      <div class="footer-tools">
-        <button class="btn btn-sm btn-outline" id="btnExportJson" title="Baixar JSON atualizado">
-          📥 Exportar JSON
-        </button>
-        <button class="btn btn-sm btn-outline" id="btnResetData" title="Voltar aos dados originais">
-          🔄 Restaurar Padrão
-        </button>
       </div>
     </div>
   </footer>

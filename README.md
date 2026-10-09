@@ -52,9 +52,9 @@ Aplicação web desenvolvida exclusivamente com **HTML, CSS, JavaScript (Vanilla
   - Tags de localização e ranking.
   - Botão direto para abrir o anúncio oficial no Airbnb em nova aba.
   - Opção para excluir um anúncio sugerido se necessário.
+  - Opção para editar as informações de um anúncio já cadastrado.
 
-- **Persistência de Dados e JSON:**
+- **Persistência de Dados:**
   - Arquivo inicial `data.json` com praias, perfis e anúncios de exemplo.
   - Todas as alterações, novos cadastros e votos são persistidos localmente no navegador (`localStorage`).
-  - Botão **📥 Exportar JSON** no rodapé para baixar os dados atualizados e compartilhar com os amigos.
-  - Botão **🔄 Restaurar Padrão** caso queira resetar para a lista original.
+  - No primeiro acesso, o site pergunta qual dos cinco perfis está usando o dispositivo.
